@@ -43,6 +43,7 @@ APPLY_LORA = True
 # --- [MODE A: BOOKSUMMARIES MULTI-LABEL (ACTIVE)] ---
 CLASSIFICATION_TYPE = 'MULTI_LABEL'
 MAX_SEQ_LENGTH = 512
+MAX_SAMPLES = 2000                  # 2000 books subset for fast training
 BOOK_PATH = "BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt"
 
 # --- [MODE B: SYMPTOM2DISEASE SINGLE-LABEL (COMMENTED OUT FOR TOGGLE)] ---
@@ -126,7 +127,7 @@ def main():
     # =======================================================================
     # --- [MODE A: BOOKSUMMARIES MULTI-LABEL (ACTIVE)] ---
     text_set, labels_dict, num_labels, mlb = dataloader.prepare_book_summaries(
-        pairs=False, book_path=BOOK_PATH
+        pairs=False, book_path=BOOK_PATH, max_samples=MAX_SAMPLES
     )
     label_names = list(mlb.classes_)
 

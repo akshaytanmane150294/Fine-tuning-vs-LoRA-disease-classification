@@ -33,15 +33,18 @@ def parse_json_column(genre_data):
 # ===========================================================================
 # [1] BOOKSUMMARIES DATASET LOADER — Multi-Label (ACTIVE)
 # ===========================================================================
-def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt'):
+def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000):
     """
     Load the Book Summary data and split it into train/dev/test sets
     :param book_path: path to the booksummaries.txt file
+    :param max_samples: subset size (default: 2000 for fast training; pass None for full dataset)
     :return: train, dev, test as pandas data frames
     """
     # Fallback paths check
     if not os.path.exists(book_path):
         alt_paths = [
+            '/content/booksummaries.txt',
+            '/content/BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt',
             'BookSummaries/data/booksummaries/booksummaries.txt',
             './BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt',
             'B:/NLP/BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt'
@@ -73,6 +76,11 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     book_df['word_count'] = book_df['summary'].str.split().str.len()
     book_df = book_df[book_df['word_count'] >= 10]
     
+    # Take fast subset if requested (default: 2000 books)
+    if max_samples is not None and len(book_df) > max_samples:
+        book_df = book_df.sample(n=max_samples, random_state=22).reset_index(drop=True)
+        print(f"[Info] Sampled subset of {max_samples} books for fast training.")
+
     train = book_df.sample(frac=0.8, random_state=22)
     rest = book_df.drop(train.index)
     dev = rest.sample(frac=0.5, random_state=22)
@@ -80,13 +88,14 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     return train, dev, test
 
 
-def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt'):
+def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000):
     """
     Load the Book Summary data and prepare the datasets for Multi-Label classification
+    :param max_samples: number of books to sample (default: 2000)
     """
     text_set = {'train': [], 'dev': [], 'test': []}
     label_set = {'train': [], 'dev': [], 'test': []}
-    train, dev, test = load_booksummaries_data(book_path)
+    train, dev, test = load_booksummaries_data(book_path, max_samples=max_samples)
 
     if not pairs:
         text_set['train'] = train['summary'].tolist()

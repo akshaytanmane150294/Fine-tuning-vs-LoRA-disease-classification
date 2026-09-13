@@ -66,8 +66,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_type", choices=["bert", "roberta", "distilbert"], required=True)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_length", type=int, default=512)
+    parser.add_argument("--max_samples", type=int, default=2000, help="Number of books to sample (default: 2000 for fast training; set None/0 for full dataset)")
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--out_dir", default=".")
     args = parser.parse_args()
@@ -84,12 +85,15 @@ def main():
     # --- [SINGLE-LABEL / SYMPTOM2DISEASE (TOGGLE)] ---
     # IS_MULTI_LABEL = False
 
+    max_samples = None if args.max_samples == 0 else args.max_samples
+
     # Load dataloaders
     (train_dataloader, valid_dataloader, test_dataloader,
      train_df, valid_df, label_names) = Utils.get_trainvalidtest_loaders(
         model_type=args.model_type,
         BATCH_SIZE=args.batch_size,
-        max_length=args.max_length
+        max_length=args.max_length,
+        max_samples=max_samples
     )
     num_classes = len(label_names)
     print(f"[info] num_classes={num_classes} | multi_label={IS_MULTI_LABEL}")
