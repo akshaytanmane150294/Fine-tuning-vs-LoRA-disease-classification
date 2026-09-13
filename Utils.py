@@ -1,113 +1,95 @@
-from datasets import load_dataset
-from transformers import BertTokenizer
-from transformers import AutoTokenizer
+import os
 import torch
-from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
+from transformers import AutoTokenizer
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler, Dataset
+from torch.optim import AdamW
 
-# gretelai/symptom_to_diagnosis usually ships with only a "train" split
-# (sometimes "test" too) - NOT train/validation/test like the emotion
-# dataset. So we load it once, then split it ourselves.
-raw = load_dataset('gretelai/symptom_to_diagnosis')
-print(raw)  # <-- run this once and LOOK at the printed output: confirms
-            #     the real split names and column names before anything else
+import dataloader
 
-# each model needs ITS OWN matching tokenizer/checkpoint - bert-base-cased
-# for BERT, roberta-base for RoBERTa (different vocab, BPE not WordPiece),
-# distilbert-base-cased for DistilBERT. MyModel.py imports this same dict
-# so the tokenizer and the model backbone always stay in sync.
+# Each model checkpoint definition
 MODEL_CHECKPOINTS = {
     "bert": "bert-base-cased",
     "roberta": "FacebookAI/roberta-base",
     "distilbert": "distilbert/distilbert-base-cased",
+    "phi3": "microsoft/Phi-3-mini-4k-instruct",
+    "llama": "meta-llama/Llama-3.2-1B-Instruct"  # or h2oai/h2o-danube-1.8b-chat
 }
 
 
 def get_tokenizer(model_type):
-    checkpoint = MODEL_CHECKPOINTS[model_type]
+    checkpoint = MODEL_CHECKPOINTS.get(model_type, model_type)
     return AutoTokenizer.from_pretrained(checkpoint)
 
 
-def encode(docs, tokenizer):
-    '''
-    This function takes list of texts and returns input_ids and attention_mask of texts
-    '''
-    encoded_dict = tokenizer(docs, add_special_tokens=True,
-        max_length=128, padding='max_length', return_attention_mask=True, truncation=True,
-        return_tensors='pt')
+def encode(docs, tokenizer, max_length=512):
+    """
+    Takes list of texts and returns input_ids and attention_mask tensors.
+    --- [MULTI-LABEL / BOOKSUMMARIES (ACTIVE)]: max_length = 512
+    --- [SINGLE-LABEL / SYMPTOM2DISEASE (COMMENTED)]: max_length = 128
+    """
+    encoded_dict = tokenizer(
+        docs,
+        add_special_tokens=True,
+        max_length=max_length,
+        padding='max_length',
+        return_attention_mask=True,
+        truncation=True,
+        return_tensors='pt'
+    )
     input_ids = encoded_dict['input_ids']
     attention_masks = encoded_dict['attention_mask']
     return input_ids, attention_masks
 
 
-def get_trainvalidtest_loaders(model_type='bert', BATCH_SIZE=16, text_col='input_text', label_col='output_text'):
-    # ---- Step 1: combine whatever splits exist into ONE dataframe ----
-    # (emotion dataset already had train/valid/test separately - this
-    # dataset does not, so we merge everything and split it ourselves)
-    all_df = None
-    for split_name in raw.keys():
-        split_df = raw[split_name].to_pandas()
-        all_df = split_df if all_df is None else all_df._append(split_df, ignore_index=True)
-
-    print("---------columns available------------")
-    print(all_df.columns.tolist())
-
-    # rename to generic text/label so the rest of the code stays simple
-    all_df = all_df.rename(columns={text_col: 'text', label_col: 'label_text'})
-    all_df = all_df[['text', 'label_text']].dropna().reset_index(drop=True)
-
-    print("---------counts before anything------------")
-    print(all_df['label_text'].value_counts())
-    print("---------------------------------------------------------")
-
-    # ---- Step 2: string disease names -> integer label ids ----
-    # (emotion dataset's labels were ALREADY integers with a ClassLabel
-    # feature giving label_names for free - this dataset's labels are
-    # plain disease-name strings, so we build label_names ourselves)
-    label_encoder = LabelEncoder()
-    all_df['label'] = label_encoder.fit_transform(all_df['label_text'])
-    label_names = list(label_encoder.classes_)
-    print("label_names:", label_names)
-
-    # ---- Step 3: WE create train/valid/test splits (dataset has none) ----
-    # num_train=500 like the original code won't work here - this dataset
-    # is small (roughly a few dozen rows per class), so we split by
-    # PERCENTAGE instead of a fixed count per class.
-    train_df, temp_df = train_test_split(
-        all_df, test_size=0.30, stratify=all_df['label'], random_state=42)
-    valid_df, test_df = train_test_split(
-        temp_df, test_size=0.50, stratify=temp_df['label'], random_state=42)
-
-    train_df = train_df.reset_index(drop=True)
-    valid_df = valid_df.reset_index(drop=True)
-    test_df = test_df.reset_index(drop=True)
-
-    print("---------counts after split------------")
-    print("train:", len(train_df), " valid:", len(valid_df), " test:", len(test_df))
-    print(train_df['label'].value_counts())
-    print("---------------------------------------------------------")
-
-    # tokenizer must MATCH the model being used - bert needs BERT's
-    # tokenizer, roberta needs RoBERTa's, distilbert needs its own
+# ===========================================================================
+# DATALOADER BUILDER FOR BERT / ROBERTA / DISTILBERT
+# ===========================================================================
+def get_trainvalidtest_loaders(model_type='bert', BATCH_SIZE=16, max_length=512):
+    """
+    Returns train, valid, test dataloaders, dataframes, and class names.
+    """
     tokenizer = get_tokenizer(model_type)
-    print(tokenizer)
 
-    train_list = train_df['text'].values.tolist()
-    train_input_ids, train_att_masks = encode(train_list, tokenizer)
-    valid_input_ids, valid_att_masks = encode(valid_df['text'].values.tolist(), tokenizer)
-    test_input_ids, test_att_masks = encode(test_df['text'].values.tolist(), tokenizer)
+    # -----------------------------------------------------------------------
+    # --- [MODE A: BOOKSUMMARIES MULTI-LABEL (ACTIVE)] ---
+    # -----------------------------------------------------------------------
+    text_set, label_set, num_labels, mlb = dataloader.prepare_book_summaries(pairs=False)
+    label_names = list(mlb.classes_)
 
-    num_check = 5
-    print(train_list[num_check])
-    print(train_input_ids[num_check])
-    print(train_att_masks[num_check])
+    train_input_ids, train_att_masks = encode(text_set['train'], tokenizer, max_length=max_length)
+    valid_input_ids, valid_att_masks = encode(text_set['dev'], tokenizer, max_length=max_length)
+    test_input_ids, test_att_masks = encode(text_set['test'], tokenizer, max_length=max_length)
 
-    # get the labels
-    train_y = torch.LongTensor(train_df['label'].values.tolist())
-    valid_y = torch.LongTensor(valid_df['label'].values.tolist())
-    test_y = torch.LongTensor(test_df['label'].values.tolist())
-    print(train_y.size(), valid_y.size(), test_y.size())
+    # For multi-label BCEWithLogitsLoss, targets MUST be FloatTensor [N, num_labels]
+    train_y = torch.tensor(label_set['train'], dtype=torch.float32)
+    valid_y = torch.tensor(label_set['dev'], dtype=torch.float32)
+    test_y = torch.tensor(label_set['test'], dtype=torch.float32)
+
+    train_df = pd.DataFrame({'text': text_set['train']})
+    valid_df = pd.DataFrame({'text': text_set['dev']})
+    test_df = pd.DataFrame({'text': text_set['test']})
+
+    # -----------------------------------------------------------------------
+    # --- [MODE B: SYMPTOM2DISEASE SINGLE-LABEL (COMMENTED OUT FOR TOGGLE)] ---
+    # To switch back to Symptom2Disease single-label classification:
+    # 1. Comment out the Mode A block above.
+    # 2. Uncomment the Mode B block below.
+    # -----------------------------------------------------------------------
+    # from sklearn.preprocessing import LabelEncoder
+    # text_set, label_set, num_labels, le = dataloader.prepare_symptom_data()
+    # label_names = list(le.classes_)
+    # train_input_ids, train_att_masks = encode(text_set['train'], tokenizer, max_length=128)
+    # valid_input_ids, valid_att_masks = encode(text_set['dev'], tokenizer, max_length=128)
+    # test_input_ids, test_att_masks = encode(text_set['test'], tokenizer, max_length=128)
+    # train_y = torch.LongTensor(label_set['train'])
+    # valid_y = torch.LongTensor(label_set['dev'])
+    # test_y = torch.LongTensor(label_set['test'])
+    # train_df = pd.DataFrame({'text': text_set['train']})
+    # valid_df = pd.DataFrame({'text': text_set['dev']})
+    # test_df = pd.DataFrame({'text': text_set['test']})
+    # -----------------------------------------------------------------------
 
     train_dataset = TensorDataset(train_input_ids, train_att_masks, train_y)
     train_sampler = RandomSampler(train_dataset)
@@ -122,3 +104,57 @@ def get_trainvalidtest_loaders(model_type='bert', BATCH_SIZE=16, text_col='input
     test_dataloader = DataLoader(test_dataset, sampler=test_sampler, batch_size=BATCH_SIZE)
 
     return train_dataloader, valid_dataloader, test_dataloader, train_df, valid_df, label_names
+
+
+# ===========================================================================
+# HELPER UTILITIES FOR ADVANCED LLM / LORA MODELS (Phi-3, LLaMA)
+# ===========================================================================
+class TextClassificationDataset(Dataset):
+    def __init__(self, texts, labels):
+        self.texts = texts
+        self.labels = labels
+
+    def __len__(self):
+        return len(self.texts)
+
+    def __getitem__(self, idx):
+        return self.texts[idx], torch.tensor(self.labels[idx])
+
+
+def tokenize_text(texts, tokenizer, max_length=512):
+    return tokenizer(
+        texts,
+        padding=True,
+        truncation=True,
+        max_length=max_length,
+        return_tensors="pt"
+    )
+
+
+def get_train_test_val_Loaders(tx_train, tx_test, tx_val, labels_train, labels_test, labels_val, batch_size):
+    train_ds = TextClassificationDataset(tx_train, labels_train)
+    test_ds = TextClassificationDataset(tx_test, labels_test)
+    val_ds = TextClassificationDataset(tx_val, labels_val)
+
+    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
+    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
+
+    return train_loader, test_loader, val_loader
+
+
+def get_optimizer(model, learning_rate=2e-4, diff_lr=1e-5, weight_decay=0.01):
+    no_decay = ["bias", "LayerNorm.weight"]
+    optimizer_grouped_parameters = [
+        {
+            "params": [p for n, p in model.named_parameters() if p.requires_grad and not any(nd in n for nd in no_decay)],
+            "weight_decay": weight_decay,
+            "lr": learning_rate,
+        },
+        {
+            "params": [p for n, p in model.named_parameters() if p.requires_grad and any(nd in n for nd in no_decay)],
+            "weight_decay": 0.0,
+            "lr": learning_rate,
+        },
+    ]
+    return AdamW(optimizer_grouped_parameters)

@@ -19,7 +19,8 @@ class ClassificationNetLoRA(torch.nn.Module):
     def __init__(self, MODEL_NAME, DO_TEST, APPLY_LORA, NUM_CLASSES=24):
         # NUM_CLASSES = 24 for Symptom2Disease dataset
         super(ClassificationNetLoRA, self).__init__()
-        #token = "hf_xxxxxxxxxxxxxxxxx"
+        # Read Hugging Face token safely from environment or fallback
+        token = os.environ.get("HF_TOKEN", None)
         model_name = MODEL_NAME
         compute_dtype = getattr(torch, "float16")
 
