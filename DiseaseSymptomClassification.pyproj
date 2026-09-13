@@ -1,0 +1,63 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>a11654e3-b047-410e-b127-1fcff8173f03</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>DiseaseSymptomClassification.py</StartupFile>
+    <SearchPath>
+    </SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>DiseaseSymptomClassification</Name>
+    <RootNamespace>DiseaseSymptomClassification</RootNamespace>
+    <InterpreterId>Global|VisualStudio|pytorch2x</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="BERTMulticlassClassification_1209333.py" />
+    <Compile Include="DiseaseSymptomClassification.py" />
+    <Compile Include="compare_all.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="countClasss.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MyModel.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="train.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MyBertModel.py" />
+    <Compile Include="Utils.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BERTMulticlassClassification_1209333.pyproj" />
+    <Content Include="BERTMulticlassClassification_1209333.sln" />
+    <Content Include="__pycache__\MyBertModel.cpython-311.pyc" />
+    <Content Include="__pycache__\Utils.cpython-311.pyc" />
+  </ItemGroup>
+  <ItemGroup>
+    <InterpreterReference Include="Global|VisualStudio|pytorch2x" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="__pycache__\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

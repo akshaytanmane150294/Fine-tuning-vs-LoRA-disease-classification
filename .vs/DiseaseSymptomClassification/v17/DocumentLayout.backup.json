@@ -1,0 +1,143 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "B:\\NLP\\DiseaseSymptomClassification\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\Utils.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:Utils.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\MyBertModel.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:MyBertModel.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\BERTMulticlassClassification_1209333.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:BERTMulticlassClassification_1209333.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\train.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:train.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\MyModel.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:MyModel.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\countClasss.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:countClasss.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|B:\\NLP\\DiseaseSymptomClassification\\compare_all.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A11654E3-B047-410E-B127-1FCFF8173F03}|DiseaseSymptomClassification.pyproj|solutionrelative:compare_all.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 6,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "countClasss.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\countClasss.py",
+              "RelativeDocumentMoniker": "countClasss.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\countClasss.py",
+              "RelativeToolTip": "countClasss.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T12:03:10.933Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "MyModel.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\MyModel.py",
+              "RelativeDocumentMoniker": "MyModel.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\MyModel.py",
+              "RelativeToolTip": "MyModel.py",
+              "ViewState": "AgIAAAYAAAAAAAAAAAAIwCcAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T11:54:04.692Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "BERTMulticlassClassification_1209333.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\BERTMulticlassClassification_1209333.py",
+              "RelativeDocumentMoniker": "BERTMulticlassClassification_1209333.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\BERTMulticlassClassification_1209333.py",
+              "RelativeToolTip": "BERTMulticlassClassification_1209333.py",
+              "ViewState": "AgIAAF4AAAAAAAAAAAAAACYAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T11:45:47.87Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "compare_all.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\compare_all.py",
+              "RelativeDocumentMoniker": "compare_all.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\compare_all.py",
+              "RelativeToolTip": "compare_all.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAKAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T11:22:14.146Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "train.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\train.py",
+              "RelativeDocumentMoniker": "train.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\train.py",
+              "RelativeToolTip": "train.py",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAAAFYAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T11:20:03.617Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Utils.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\Utils.py",
+              "RelativeDocumentMoniker": "Utils.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\Utils.py",
+              "RelativeToolTip": "Utils.py",
+              "ViewState": "AgIAAEcAAAAAAAAAAAAAABMAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T10:04:16.639Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MyBertModel.py",
+              "DocumentMoniker": "B:\\NLP\\DiseaseSymptomClassification\\MyBertModel.py",
+              "RelativeDocumentMoniker": "MyBertModel.py",
+              "ToolTip": "B:\\NLP\\DiseaseSymptomClassification\\MyBertModel.py",
+              "RelativeToolTip": "MyBertModel.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAzAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-08-12T09:52:46.021Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
