@@ -53,7 +53,9 @@ class MyModel(nn.Module):
         super(MyModel, self).__init__()
         self.model_type = model_type
         checkpoint = MODEL_CHECKPOINTS[model_type]
-        self.backbone = AutoModel.from_pretrained(checkpoint)
+        import os
+        token = os.environ.get("HF_TOKEN", None)
+        self.backbone = AutoModel.from_pretrained(checkpoint, token=token)
         print(self.backbone)
 
         hidden_size = self.backbone.config.hidden_size

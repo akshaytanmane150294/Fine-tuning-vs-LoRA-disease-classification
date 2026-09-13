@@ -18,9 +18,24 @@ MODEL_CHECKPOINTS = {
 }
 
 
+# Auto-load HF_TOKEN from .env or environment if available
+if "HF_TOKEN" not in os.environ:
+    for env_file in [".env", ".env.example"]:
+        if os.path.exists(env_file):
+            try:
+                with open(env_file, "r") as f:
+                    for line in f:
+                        if line.startswith("HF_TOKEN="):
+                            os.environ["HF_TOKEN"] = line.strip().split("=", 1)[1]
+                            break
+            except Exception:
+                pass
+
+
 def get_tokenizer(model_type):
     checkpoint = MODEL_CHECKPOINTS.get(model_type, model_type)
-    return AutoTokenizer.from_pretrained(checkpoint)
+    token = os.environ.get("HF_TOKEN", None)
+    return AutoTokenizer.from_pretrained(checkpoint, token=token)
 
 
 def encode(docs, tokenizer, max_length=512):
