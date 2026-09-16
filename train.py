@@ -30,7 +30,7 @@ from MyModel import MyModel
 # ===========================================================================
 # EVALUATION FUNCTION
 # ===========================================================================
-def evaluate(model, dataloader, device, criterion, is_multi_label=True):
+def evaluate(model, dataloader, device, criterion, is_multi_label=True, threshold=0.20):
     model.eval()
     total_loss = 0
     all_preds, all_labels = [], []
@@ -44,7 +44,24 @@ def evaluate(model, dataloader, device, criterion, is_multi_label=True):
             # --- [MULTI-LABEL / BOOKSUMMARIES (ACTIVE)] ---
             if is_multi_label:
                 loss = criterion(logits, labels.float())
-                preds = (torch.sigmoid(logits) >= 0.5).int().cpu().numpy()
+                probs = torch.sigmoid(logits)
+                probs_np = probs.cpu().numpy()
+                preds = np.zeros_like(probs_np, dtype=int)
+                
+                # Calibrated Multi-label selection with Top-K cap (Max 3 genres per book)
+                for i in range(len(probs_np)):
+                    # Get indices exceeding threshold
+                    above_thresh = np.where(probs_np[i] >= threshold)[0]
+                    if len(above_thresh) == 0:
+                        # Fallback: pick the single highest probability class
+                        top_idx = probs_np[i].argmax()
+                        preds[i, top_idx] = 1
+                    elif len(above_thresh) <= 3:
+                        preds[i, above_thresh] = 1
+                    else:
+                        # Cap at Top-3 highest probability classes among those > threshold
+                        top3_idx = probs_np[i].argsort()[-3:]
+                        preds[i, top3_idx] = 1
             # --- [SINGLE-LABEL / SYMPTOM2DISEASE (COMMENTED / CONDITIONAL)] ---
             else:
                 loss = criterion(logits, labels.long())
@@ -69,6 +86,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--max_samples", type=int, default=2000, help="Number of books to sample (default: 2000 for fast training; set None/0 for full dataset)")
+    parser.add_argument("--threshold", type=float, default=0.35, help="Multi-label classification probability threshold (default: 0.35)")
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--out_dir", default=".")
     args = parser.parse_args()
@@ -96,7 +114,7 @@ def main():
         max_samples=max_samples
     )
     num_classes = len(label_names)
-    print(f"[info] num_classes={num_classes} | multi_label={IS_MULTI_LABEL}")
+    print(f"[info] num_classes={num_classes} | multi_label={IS_MULTI_LABEL} | threshold={args.threshold}")
 
     # Create model
     model = MyModel(args.model_type, num_classes).to(device)
@@ -105,13 +123,20 @@ def main():
     print(f"[info] total params={num_params:,} trainable={num_trainable:,}")
 
     # =======================================================================
-    # 2. LOSS CRITERION TOGGLE
+    # 2. LOSS CRITERION WITH BALANCED POS_WEIGHT (FOR MULTI-LABEL)
     # =======================================================================
     # --- [MULTI-LABEL / BOOKSUMMARIES (ACTIVE)] ---
-    criterion = nn.BCEWithLogitsLoss()
-    
-    # --- [SINGLE-LABEL / SYMPTOM2DISEASE (COMMENTED)] ---
-    # criterion = nn.CrossEntropyLoss()
+    if IS_MULTI_LABEL:
+        train_labels_tensor = train_dataloader.dataset.tensors[2]  # [N, num_classes]
+        num_pos = train_labels_tensor.sum(dim=0)
+        num_neg = train_labels_tensor.shape[0] - num_pos
+        # Square root ratio clamped to [1.0, 3.5] for optimal Precision-Recall equilibrium
+        raw_ratio = torch.sqrt(num_neg / torch.clamp(num_pos, min=1.0))
+        pos_weights = torch.clamp(raw_ratio, min=1.0, max=3.5).to(device)
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weights)
+    else:
+        # --- [SINGLE-LABEL / SYMPTOM2DISEASE (COMMENTED)] ---
+        criterion = nn.CrossEntropyLoss()
 
     optimizer = AdamW(model.parameters(), lr=args.lr)
     scheduler = get_linear_schedule_with_warmup(
@@ -147,7 +172,7 @@ def main():
 
         # Validation
         val_loss, val_preds, val_labels, _ = evaluate(
-            model, valid_dataloader, device, criterion, is_multi_label=IS_MULTI_LABEL
+            model, valid_dataloader, device, criterion, is_multi_label=IS_MULTI_LABEL, threshold=args.threshold
         )
         val_loss_per_epoch.append(val_loss)
 
@@ -167,7 +192,7 @@ def main():
 
     # ---- Final test-set evaluation ----
     test_loss, test_preds, test_labels, ms_per_batch = evaluate(
-        model, test_dataloader, device, criterion, is_multi_label=IS_MULTI_LABEL
+        model, test_dataloader, device, criterion, is_multi_label=IS_MULTI_LABEL, threshold=args.threshold
     )
 
     print("\n=== TEST SET RESULTS ===")

@@ -79,8 +79,8 @@ def calc_accuracy(dataloader, model, tokenizer, type):
         return accuracy
 
 
-def calc_accuracy_multi_label(dataloader, model, tokenizer, type, label_names=None):
-    """Evaluation for Multi-Label (BookSummaries) using Sigmoid >= 0.5"""
+def calc_accuracy_multi_label(dataloader, model, tokenizer, type, label_names=None, threshold=0.20):
+    """Evaluation for Multi-Label (BookSummaries) using Dynamic Sigmoid Threshold & Top-1 Fallback"""
     with torch.no_grad():
         model.eval()
         labels = []
@@ -99,7 +99,12 @@ def calc_accuracy_multi_label(dataloader, model, tokenizer, type, label_names=No
                 
         labels = torch.stack(labels).int().numpy()
         predictions = torch.stack(predictions).numpy()
-        y_pred_labels = np.where(predictions >= 0.5, 1, 0)
+        y_pred_labels = np.where(predictions >= threshold, 1, 0)
+        
+        # Dynamic Top-1 Fallback: If no class exceeds threshold, pick top-1 class
+        for i in range(len(y_pred_labels)):
+            if y_pred_labels[i].sum() == 0:
+                y_pred_labels[i, predictions[i].argmax()] = 1
         
         micro_f1 = f1_score(labels, y_pred_labels, average='micro', zero_division=0)
         macro_f1 = f1_score(labels, y_pred_labels, average='macro', zero_division=0)
