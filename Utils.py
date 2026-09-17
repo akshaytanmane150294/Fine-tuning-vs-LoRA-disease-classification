@@ -61,17 +61,20 @@ def encode(docs, tokenizer, max_length=512):
 # ===========================================================================
 # DATALOADER BUILDER FOR BERT / ROBERTA / DISTILBERT
 # ===========================================================================
-def get_trainvalidtest_loaders(model_type='bert', BATCH_SIZE=16, max_length=512, max_samples=2000):
+def get_trainvalidtest_loaders(model_type='bert', BATCH_SIZE=16, max_length=512, max_samples=2000, top_k_genres=20):
     """
     Returns train, valid, test dataloaders, dataframes, and class names.
     :param max_samples: subset size (default: 2000 books for fast training; pass None for full dataset)
+    :param top_k_genres: keep only the top K most frequent genres (default: 20; pass 0/None for all)
     """
     tokenizer = get_tokenizer(model_type)
 
     # -----------------------------------------------------------------------
     # --- [MODE A: BOOKSUMMARIES MULTI-LABEL (ACTIVE)] ---
     # -----------------------------------------------------------------------
-    text_set, label_set, num_labels, mlb = dataloader.prepare_book_summaries(pairs=False, max_samples=max_samples)
+    text_set, label_set, num_labels, mlb = dataloader.prepare_book_summaries(
+        pairs=False, max_samples=max_samples, top_k_genres=top_k_genres
+    )
     label_names = list(mlb.classes_)
 
     train_input_ids, train_att_masks = encode(text_set['train'], tokenizer, max_length=max_length)

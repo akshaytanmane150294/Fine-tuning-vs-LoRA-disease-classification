@@ -33,12 +33,13 @@ def parse_json_column(genre_data):
 # ===========================================================================
 # [1] BOOKSUMMARIES DATASET LOADER — Multi-Label (ACTIVE)
 # ===========================================================================
-def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000):
+def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000, top_k_genres=20):
     """
     Load the Book Summary data and split it into train/dev/test sets
     :param book_path: path to the booksummaries.txt file
     :param max_samples: subset size (default: 2000 for fast training; pass None for full dataset)
-    :return: train, dev, test as pandas data frames
+    :param top_k_genres: keep only the top K most frequent genres (default: 20; pass None for all 227)
+    :return: train, dev, test as pandas data frames, and top_genres list
     """
     # Fallback paths check
     if not os.path.exists(book_path):
@@ -75,6 +76,23 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     book_df = book_df.dropna(subset=['genres', 'summary'])  # remove rows missing any genres or summaries
     book_df['word_count'] = book_df['summary'].str.split().str.len()
     book_df = book_df[book_df['word_count'] >= 10]
+
+    # Extract clean list of genres per row
+    book_df['genre_list'] = book_df['genres'].apply(lambda g: list(g.values()) if isinstance(g, dict) else [])
+
+    # Filter to top_k_genres if specified (standard NLP benchmark practice)
+    top_genres = None
+    if top_k_genres is not None and top_k_genres > 0:
+        from collections import Counter
+        all_raw_genres = [g for sublist in book_df['genre_list'] for g in sublist]
+        genre_counts = Counter(all_raw_genres)
+        top_genres = [g for g, _ in genre_counts.most_common(top_k_genres)]
+        
+        # Keep only top genres per book
+        book_df['genre_list'] = book_df['genre_list'].apply(lambda gl: [g for g in gl if g in top_genres])
+        # Filter out books that have no genres after filtering
+        book_df = book_df[book_df['genre_list'].map(len) > 0].reset_index(drop=True)
+        print(f"[BookSummaries] Filtered to Top {len(top_genres)} genres across {len(book_df)} books.")
     
     # Take fast subset if requested (default: 2000 books)
     if max_samples is not None and len(book_df) > max_samples:
@@ -85,41 +103,34 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     rest = book_df.drop(train.index)
     dev = rest.sample(frac=0.5, random_state=22)
     test = rest.drop(dev.index)
-    return train, dev, test
+    return train, dev, test, top_genres
 
 
-def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000):
+def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000, top_k_genres=20):
     """
     Load the Book Summary data and prepare the datasets for Multi-Label classification
     :param max_samples: number of books to sample (default: 2000)
+    :param top_k_genres: keep only top K most frequent genres (default: 20)
     """
     text_set = {'train': [], 'dev': [], 'test': []}
     label_set = {'train': [], 'dev': [], 'test': []}
-    train, dev, test = load_booksummaries_data(book_path, max_samples=max_samples)
+    train, dev, test, top_genres = load_booksummaries_data(book_path, max_samples=max_samples, top_k_genres=top_k_genres)
 
     if not pairs:
         text_set['train'] = train['summary'].tolist()
         text_set['dev'] = dev['summary'].tolist()
         text_set['test'] = test['summary'].tolist()
 
-        train_genres = train['genres'].tolist()
-        label_set['train'] = [list(genre.values()) for genre in train_genres]
-
-        dev_genres = dev['genres'].tolist()
-        label_set['dev'] = [list(genre.values()) for genre in dev_genres]
-
-        test_genres = test['genres'].tolist()
-        label_set['test'] = [list(genre.values()) for genre in test_genres]
+        label_set['train'] = train['genre_list'].tolist()
+        label_set['dev'] = dev['genre_list'].tolist()
+        label_set['test'] = test['genre_list'].tolist()
     else:
         train_temp = train['summary'].tolist()
         dev_temp = dev['summary'].tolist()
         test_temp = test['summary'].tolist()
-        train_genres = train['genres'].tolist()
-        train_genres_temp = [list(genre.values()) for genre in train_genres]
-        dev_genres = dev['genres'].tolist()
-        dev_genres_temp = [list(genre.values()) for genre in dev_genres]
-        test_genres = test['genres'].tolist()
-        test_genres_temp = [list(genre.values()) for genre in test_genres]
+        train_genres_temp = train['genre_list'].tolist()
+        dev_genres_temp = dev['genre_list'].tolist()
+        test_genres_temp = test['genre_list'].tolist()
 
         for i in range(0, len(train_temp) - 1, 2):
             text_set['train'].append(train_temp[i] + train_temp[i + 1])
@@ -135,7 +146,7 @@ def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/d
 
     vectorized_labels, num_labels, mlb = vectorize_labels(label_set)
     print(f"[BookSummaries] Train: {len(text_set['train'])}, Dev: {len(text_set['dev'])}, Test: {len(text_set['test'])}")
-    print(f"[BookSummaries] Total unique genre classes: {num_labels}")
+    print(f"[BookSummaries] Active genre classes: {num_labels}")
     return text_set, vectorized_labels, num_labels, mlb
 
 

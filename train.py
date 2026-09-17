@@ -86,6 +86,7 @@ def main():
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--max_length", type=int, default=512)
     parser.add_argument("--max_samples", type=int, default=2000, help="Number of books to sample (default: 2000 for fast training; set None/0 for full dataset)")
+    parser.add_argument("--top_k_genres", type=int, default=20, help="Number of top frequent genres to include (default: 20; set 0 for all 227)")
     parser.add_argument("--threshold", type=float, default=0.35, help="Multi-label classification probability threshold (default: 0.35)")
     parser.add_argument("--lr", type=float, default=2e-5)
     parser.add_argument("--out_dir", default=".")
@@ -104,6 +105,7 @@ def main():
     # IS_MULTI_LABEL = False
 
     max_samples = None if args.max_samples == 0 else args.max_samples
+    top_k_genres = None if args.top_k_genres == 0 else args.top_k_genres
 
     # Load dataloaders
     (train_dataloader, valid_dataloader, test_dataloader,
@@ -111,7 +113,8 @@ def main():
         model_type=args.model_type,
         BATCH_SIZE=args.batch_size,
         max_length=args.max_length,
-        max_samples=max_samples
+        max_samples=max_samples,
+        top_k_genres=top_k_genres
     )
     num_classes = len(label_names)
     print(f"[info] num_classes={num_classes} | multi_label={IS_MULTI_LABEL} | threshold={args.threshold}")
