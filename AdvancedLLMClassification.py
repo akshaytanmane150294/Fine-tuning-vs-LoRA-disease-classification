@@ -114,7 +114,7 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(
         model_checkpoint,
-        trust_remote_code=True,
+        trust_remote_code=False,
     )
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token

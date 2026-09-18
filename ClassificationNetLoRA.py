@@ -24,32 +24,40 @@ class ClassificationNetLoRA(torch.nn.Module):
         model_name = MODEL_NAME
         compute_dtype = getattr(torch, "float16")
 
-        # Load configuration from a pre-trained model
-        config = AutoConfig.from_pretrained(model_name)
+        # Load configuration from a pre-trained model with rope_scaling compatibility
+        config = AutoConfig.from_pretrained(model_name, token=token)
+        if hasattr(config, "rope_scaling") and isinstance(config.rope_scaling, dict):
+            if "rope_type" in config.rope_scaling and "type" not in config.rope_scaling:
+                config.rope_scaling["type"] = config.rope_scaling["rope_type"]
+            elif "type" in config.rope_scaling and "rope_type" not in config.rope_scaling:
+                config.rope_scaling["rope_type"] = config.rope_scaling["type"]
+
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_use_double_quant=False,
             bnb_4bit_quant_type="nf4",
             bnb_4bit_compute_dtype=compute_dtype,
         )
+        # Check CUDA availability for 4-bit QLoRA
+        if not torch.cuda.is_available():
+            raise RuntimeError(
+                "\n[ERROR] CUDA GPU is not enabled or not detected!\n"
+                "4-bit QLoRA LLM training requires a GPU.\n"
+                "👉 In Google Colab: Go to 'Runtime' -> 'Change runtime type' -> Select 'T4 GPU' (or A100) -> Click 'Save', then re-run.\n"
+            )
+
         self.model_name = MODEL_NAME
         self.APPLY_LORA = APPLY_LORA
 
-        # Load pre-trained language model with specific configurations
-        if DO_TEST == False:
-            self.llm = AutoModelForCausalLM.from_pretrained(
-                model_name, token=token,
-                trust_remote_code=True,
-                device_map="cuda",
-                quantization_config=bnb_config,
-            )
-        else:
-            self.llm = AutoModelForCausalLM.from_pretrained(
-                model_name, token=token,
-                trust_remote_code=True,
-                device_map="cuda",
-                quantization_config=bnb_config,
-            )
+        # Load pre-trained language model using native transformers support
+        self.llm = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            config=config,
+            token=token,
+            trust_remote_code=False,
+            device_map="auto",
+            quantization_config=bnb_config,
+        )
 
         # --------------------apply LoRA to LLM--------------------
         peft_config = LoraConfig(
