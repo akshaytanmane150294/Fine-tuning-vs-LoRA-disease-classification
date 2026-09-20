@@ -68,6 +68,8 @@ The decoder-only models were adapted using LoRA.
 
 ## Methodology
 
+![Methodology Pipeline](Figures/Figure1new.png)
+
 The experimental pipeline consists of the following stages:
 
 ```text
@@ -140,13 +142,31 @@ The experimental results reported in the research paper are summarized below.
 | Phi-4-mini-instruct | LoRA | 93.33% |
 | Llama-3.2-1B-Instruct | LoRA | **95.00%** |
 
+### Model Confusion Matrices & Visualizations
+
+| BERT | RoBERTa |
+|:---:|:---:|
+| ![BERT Results](Figures/Bert.png) | ![RoBERTa Results](Figures/Roberta.png) |
+
+| DistilBERT | Phi-4-mini |
+|:---:|:---:|
+| ![DistilBERT Results](Figures/DistilBert.png) | ![Phi-4 Results](Figures/Phi1.png) |
+
+| Llama-3.2-1B |
+|:---:|
+| ![Llama Results](Figures/Llama.png) |
+
 ### Best Performing Model
 
 Among the evaluated models, **Llama-3.2-1B-Instruct with LoRA achieved 95.00% accuracy** on the reported test set.
 
+![Best Performing Model](Figures/Figure3.png)
+
 RoBERTa and DistilBERT achieved 94.37%, while Phi-4-mini-instruct achieved 93.33%.
 
 ## Performance Comparison
+
+![Performance Comparison](Figures/Figure2.png)
 
 The results demonstrate that LoRA-based adaptation of decoder-only LLMs can achieve competitive classification performance while requiring substantially fewer trainable parameters.
 
@@ -157,6 +177,8 @@ The study particularly highlights the trade-off between:
 - Training time
 - Computational efficiency
 - Model architecture
+
+![Trade-off Analysis](Figures/Figure4.png)
 
 ## Error Analysis
 
