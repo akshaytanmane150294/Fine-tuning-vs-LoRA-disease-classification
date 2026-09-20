@@ -5,19 +5,16 @@ from transformers import (AutoModelForCausalLM,
                            AutoTokenizer,
                            BitsAndBytesConfig,
                            )
-from peft import (
-    get_peft_config,
-    get_peft_model,
-    LoraConfig,
-    TaskType,
-    PeftModel
-)
 from ClassificationHead import ClassificationHead
+from DualBranchLoRA import (
+    apply_dual_branch_lora,
+    get_dual_branch_lora_state_dict,
+    load_dual_branch_lora_state_dict,
+)
 
 
 class ClassificationNetLoRA(torch.nn.Module):
-    def __init__(self, MODEL_NAME, DO_TEST, APPLY_LORA, NUM_CLASSES=24):
-        # NUM_CLASSES = 24 for Symptom2Disease dataset
+    def __init__(self, MODEL_NAME, DO_TEST, APPLY_LORA, NUM_CLASSES=24, r=8, lora_alpha=16):
         super(ClassificationNetLoRA, self).__init__()
         # Read Hugging Face token safely from environment or fallback
         token = os.environ.get("HF_TOKEN", None)
@@ -59,30 +56,26 @@ class ClassificationNetLoRA(torch.nn.Module):
             quantization_config=bnb_config,
         )
 
-        # --------------------apply LoRA to LLM--------------------
-        peft_config = LoraConfig(
-            task_type=TaskType.CAUSAL_LM,
-            inference_mode=False,
-            r=8,
-            lora_alpha=16,
-            target_modules='all-linear',
-            lora_dropout=0.
-        )
         # Replace language model head with an identity function
         self.llm.lm_head = torch.nn.Identity()
 
         if DO_TEST:
             if APPLY_LORA == True:
-                self.llm.load_adapter("SavedAdapters/MyPeftAdapter")
+                apply_dual_branch_lora(self.llm, r=r, lora_alpha=lora_alpha)
+                adapter_path = os.path.join('SavedAdapters', 'dual_branch_lora.pt')
+                if os.path.exists(adapter_path):
+                    state = torch.load(adapter_path, map_location="cpu")
+                    load_dual_branch_lora_state_dict(self.llm, state)
+                    print(f"[DualBranchLoRA] Loaded adapter weights from {adapter_path}")
             self.cls_head = ClassificationHead(config.hidden_size, num_classes=NUM_CLASSES)
             self.cls_head.load_state_dict(torch.load('SavedClassificationModels/clshead.pt'))
             self.cls_head.eval()
             return
 
-        # Apply LoRA----------- this line onwards is not used by test mode
+        # ---------------- Apply Dual-Branch LoRA to LLM ----------------
         if APPLY_LORA == True:
-            self.llm = get_peft_model(self.llm, peft_config, 'MyPeftAdapter')
-            print(self.llm.active_adapter)
+            # Injects two parallel branches: (A -> B1) and (C -> B2)
+            apply_dual_branch_lora(self.llm, r=r, lora_alpha=lora_alpha)
         else:
             # Freeze all parameters of the language model backbone
             for name, param in self.llm.named_parameters():
@@ -97,8 +90,11 @@ class ClassificationNetLoRA(torch.nn.Module):
         return logits
 
     def save_peft_adapter(self):
-        if self.APPLY_LORA == False:
-            self.llm.save_pretrained('BaseModel')
-        else:
-            self.llm.save_pretrained('SavedAdapters')  # does not save classification head
+        if self.APPLY_LORA:
+            os.makedirs('SavedAdapters', exist_ok=True)
+            lora_state = get_dual_branch_lora_state_dict(self.llm)
+            torch.save(lora_state, os.path.join('SavedAdapters', 'dual_branch_lora.pt'))
+            print("[DualBranchLoRA] Saved dual-branch adapter weights to SavedAdapters/dual_branch_lora.pt")
+        os.makedirs('SavedClassificationModels', exist_ok=True)
         torch.save(self.cls_head.state_dict(), os.path.join('SavedClassificationModels', 'clshead.pt'))
+        print("[ClassificationHead] Saved head weights to SavedClassificationModels/clshead.pt")
