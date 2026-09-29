@@ -112,8 +112,10 @@ def main():
     model_checkpoint = MODEL_CHECKPOINTS.get(args.model_type, args.model_type)
     print(f"[info] Running {args.model_type} ({model_checkpoint}) | epochs={args.epochs} | batch_size={args.batch_size}x{args.grad_accum} | max_length={args.max_length} | max_samples={args.max_samples} | top_k_genres={args.top_k_genres} | threshold={args.threshold}")
 
+    token = os.environ.get("HF_TOKEN", None)
     tokenizer = AutoTokenizer.from_pretrained(
         model_checkpoint,
+        token=token,
         trust_remote_code=False,
     )
     if tokenizer.pad_token is None:

@@ -20,14 +20,27 @@ MODEL_CHECKPOINTS = {
 
 # Auto-load HF_TOKEN from .env or environment if available
 if "HF_TOKEN" not in os.environ:
-    for env_file in [".env", ".env.example"]:
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    candidate_paths = [
+        ".env",
+        os.path.join(current_dir, ".env"),
+        os.path.join(os.path.dirname(current_dir), ".env"),
+        ".env.example",
+        os.path.join(current_dir, ".env.example"),
+    ]
+    for env_file in candidate_paths:
         if os.path.exists(env_file):
             try:
                 with open(env_file, "r") as f:
                     for line in f:
+                        line = line.strip()
                         if line.startswith("HF_TOKEN="):
-                            os.environ["HF_TOKEN"] = line.strip().split("=", 1)[1]
-                            break
+                            token_val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                            if token_val:
+                                os.environ["HF_TOKEN"] = token_val
+                                break
+                if "HF_TOKEN" in os.environ:
+                    break
             except Exception:
                 pass
 
