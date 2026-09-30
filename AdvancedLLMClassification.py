@@ -127,7 +127,7 @@ def main():
     # =======================================================================
     max_samples = None if args.max_samples == 0 else args.max_samples
     top_k_genres = None if args.top_k_genres == 0 else args.top_k_genres
-    book_path = "BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt"
+    book_path = "inputData/booksummaries.txt"
 
     # --- [MODE A: BOOKSUMMARIES MULTI-LABEL (ACTIVE)] ---
     CLASSIFICATION_TYPE = 'MULTI_LABEL'
@@ -139,7 +139,7 @@ def main():
     # --- [MODE B: SYMPTOM2DISEASE SINGLE-LABEL (COMMENTED OUT FOR TOGGLE)] ---
     # CLASSIFICATION_TYPE = 'MULTI_CLASS'
     # text_set, labels_dict, num_labels, label_encoder = dataloader.prepare_symptom_data(
-    #     csv_path="archive/Symptom2Disease.csv"
+    #     csv_path="inputData/Symptom2Disease.csv"
     # )
     # label_names = list(label_encoder.classes_)
     # =======================================================================

@@ -33,7 +33,7 @@ def parse_json_column(genre_data):
 # ===========================================================================
 # [1] BOOKSUMMARIES DATASET LOADER — Multi-Label (ACTIVE)
 # ===========================================================================
-def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000, top_k_genres=20):
+def load_booksummaries_data(book_path='inputData/booksummaries.txt', max_samples=2000, top_k_genres=20):
     """
     Load the Book Summary data and split it into train/dev/test sets
     :param book_path: path to the booksummaries.txt file
@@ -44,10 +44,13 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     # Fallback paths check
     if not os.path.exists(book_path):
         alt_paths = [
+            'inputData/booksummaries.txt',
+            './inputData/booksummaries.txt',
+            '../inputData/booksummaries.txt',
+            'BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt',
+            'BookSummaries/data/booksummaries/booksummaries.txt',
             '/content/booksummaries.txt',
             '/content/BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt',
-            'BookSummaries/data/booksummaries/booksummaries.txt',
-            './BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt',
             'B:/NLP/BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt'
         ]
         for alt in alt_paths:
@@ -106,7 +109,7 @@ def load_booksummaries_data(book_path='BookSummaries/BookSummaries/data/booksumm
     return train, dev, test, top_genres
 
 
-def prepare_book_summaries(pairs=False, book_path='BookSummaries/BookSummaries/data/booksummaries/booksummaries.txt', max_samples=2000, top_k_genres=20):
+def prepare_book_summaries(pairs=False, book_path='inputData/booksummaries.txt', max_samples=2000, top_k_genres=20):
     """
     Load the Book Summary data and prepare the datasets for Multi-Label classification
     :param max_samples: number of books to sample (default: 2000)
@@ -173,13 +176,13 @@ def vectorize_labels(all_labels):
 # [2] SYMPTOM2DISEASE DATASET LOADER — Single-Label (COMMENTED OUT FOR TOGGLE)
 # To switch back to Symptom2Disease, uncomment this function and use it.
 # ===========================================================================
-# def prepare_symptom_data(csv_path='archive/Symptom2Disease.csv', test_size=0.15, val_size=0.15, random_state=22):
+# def prepare_symptom_data(csv_path='inputData/Symptom2Disease.csv', test_size=0.15, val_size=0.15, random_state=22):
 #     """
 #     Load the Symptom2Disease dataset and split into train/dev/test sets.
 #     Single-label multi-class classification (NOT multi-label).
 #     """
 #     if not os.path.exists(csv_path):
-#         alt_paths = ['/content/Symptom2Disease.csv', 'Symptom2Disease.csv', './archive/Symptom2Disease.csv']
+#         alt_paths = ['inputData/Symptom2Disease.csv', './inputData/Symptom2Disease.csv', '../inputData/Symptom2Disease.csv', 'archive/Symptom2Disease.csv', '/content/Symptom2Disease.csv', 'Symptom2Disease.csv']
 #         for alt in alt_paths:
 #             if os.path.exists(alt):
 #                 csv_path = alt
