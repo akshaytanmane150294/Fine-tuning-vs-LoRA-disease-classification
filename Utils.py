@@ -189,4 +189,10 @@ def get_optimizer(model, learning_rate=2e-4, diff_lr=1e-5, weight_decay=0.01):
             "lr": learning_rate,
         },
     ]
-    return AdamW(optimizer_grouped_parameters)
+    try:
+        import bitsandbytes as bnb
+        print("[Optimizer] Using bitsandbytes.optim.PagedAdamW8bit (Memory-Optimized for GPU)")
+        return bnb.optim.PagedAdamW8bit(optimizer_grouped_parameters)
+    except (ImportError, Exception) as e:
+        print("[Optimizer] bitsandbytes not available, falling back to PyTorch AdamW")
+        return AdamW(optimizer_grouped_parameters)

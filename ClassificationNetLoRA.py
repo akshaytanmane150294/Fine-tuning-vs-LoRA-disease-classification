@@ -60,15 +60,23 @@ class ClassificationNetLoRA(torch.nn.Module):
         self.llm.lm_head = torch.nn.Identity()
 
         if DO_TEST:
+            output_dir = '/kaggle/working' if os.path.exists('/kaggle/working') else '.'
             if APPLY_LORA == True:
                 apply_dual_branch_lora(self.llm, r=r, lora_alpha=lora_alpha)
-                adapter_path = os.path.join('SavedAdapters', 'dual_branch_lora.pt')
+                adapter_path = os.path.join(output_dir, 'SavedAdapters', 'dual_branch_lora.pt')
+                if not os.path.exists(adapter_path):
+                    adapter_path = os.path.join('SavedAdapters', 'dual_branch_lora.pt')
                 if os.path.exists(adapter_path):
                     state = torch.load(adapter_path, map_location="cpu")
                     load_dual_branch_lora_state_dict(self.llm, state)
                     print(f"[DualBranchLoRA] Loaded adapter weights from {adapter_path}")
             self.cls_head = ClassificationHead(config.hidden_size, num_classes=NUM_CLASSES)
-            self.cls_head.load_state_dict(torch.load('SavedClassificationModels/clshead.pt'))
+            clshead_path = os.path.join(output_dir, 'SavedClassificationModels', 'clshead.pt')
+            if not os.path.exists(clshead_path):
+                clshead_path = os.path.join('SavedClassificationModels', 'clshead.pt')
+            if os.path.exists(clshead_path):
+                self.cls_head.load_state_dict(torch.load(clshead_path))
+                print(f"[ClassificationHead] Loaded head weights from {clshead_path}")
             self.cls_head.eval()
             return
 
@@ -90,11 +98,18 @@ class ClassificationNetLoRA(torch.nn.Module):
         return logits
 
     def save_peft_adapter(self):
+        output_dir = '/kaggle/working' if os.path.exists('/kaggle/working') else '.'
+        adapters_dir = os.path.join(output_dir, 'SavedAdapters')
+        models_dir = os.path.join(output_dir, 'SavedClassificationModels')
+        os.makedirs(adapters_dir, exist_ok=True)
+        os.makedirs(models_dir, exist_ok=True)
+
         if self.APPLY_LORA:
-            os.makedirs('SavedAdapters', exist_ok=True)
             lora_state = get_dual_branch_lora_state_dict(self.llm)
-            torch.save(lora_state, os.path.join('SavedAdapters', 'dual_branch_lora.pt'))
-            print("[DualBranchLoRA] Saved dual-branch adapter weights to SavedAdapters/dual_branch_lora.pt")
-        os.makedirs('SavedClassificationModels', exist_ok=True)
-        torch.save(self.cls_head.state_dict(), os.path.join('SavedClassificationModels', 'clshead.pt'))
-        print("[ClassificationHead] Saved head weights to SavedClassificationModels/clshead.pt")
+            save_path = os.path.join(adapters_dir, 'dual_branch_lora.pt')
+            torch.save(lora_state, save_path)
+            print(f"[DualBranchLoRA] Saved dual-branch adapter weights to {save_path}")
+
+        head_save_path = os.path.join(models_dir, 'clshead.pt')
+        torch.save(self.cls_head.state_dict(), head_save_path)
+        print(f"[ClassificationHead] Saved head weights to {head_save_path}")

@@ -242,8 +242,9 @@ def main():
             val_score = calc_accuracy(val_dataloader, model, tokenizer, type='val', max_length=args.max_length)
         print(f'Epoch {epoch+1} Complete | Validation Score: {val_score:.4f}')
         
-        os.makedirs('SavedAdapters', exist_ok=True)
-        os.makedirs('SavedClassificationModels', exist_ok=True)
+        output_dir = '/kaggle/working' if os.path.exists('/kaggle/working') else '.'
+        os.makedirs(os.path.join(output_dir, 'SavedAdapters'), exist_ok=True)
+        os.makedirs(os.path.join(output_dir, 'SavedClassificationModels'), exist_ok=True)
         model.save_peft_adapter()
 
     # Final Test
